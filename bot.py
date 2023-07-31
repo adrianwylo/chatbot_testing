@@ -1,22 +1,31 @@
-import random
+import os
+import openai
+
+openai.api_type = "azure"
+openai.api_base = "https://test-ai-insurance.openai.azure.com/"
+openai.api_version = "2023-03-15-preview"
+openai.api_key = os.getenv("8a55f4d848e841cba22354e78789ada4")
 
 class SimpleChatbot:
     def __init__(self):
-        self.greetings = ['hello', 'hi', 'hey', 'hola', 'howdy']
-        self.goodbyes = ['bye', 'goodbye', 'see you', 'cya']
-        self.responses = {
-            'what is your name?': 'I am a simple chatbot.',
-            'how are you?': 'I am doing well, thank you!',
-            'default': "I'm sorry, I don't understand.",
-        }
+        self.messages = [
+            {"role": "system", "content": "You are an AI assistant that helps people find information."}
+        ]
 
     def generate_response(self, user_input):
-        if user_input.lower() in self.greetings:
-            return random.choice(self.greetings).capitalize()
-        elif user_input.lower() in self.goodbyes:
-            return random.choice(self.goodbyes).capitalize()
-        else:
-            return self.responses.get(user_input.lower(), self.responses['default'])
+        self.messages.append({"role": "user", "content": user_input.lower()})
+        response = openai.ChatCompletion.create(
+            engine="text-davinci-002",  # Use an appropriate engine here.
+            messages=self.messages,
+            temperature=0.7,
+            max_tokens=800,
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None
+        )
+        self.messages.append({"role": "assistant", "content": response["choices"][0]["message"]["content"]})
+        return response["choices"][0]["message"]["content"]
 
 def main():
     chatbot = SimpleChatbot()
@@ -27,7 +36,6 @@ def main():
         if user_input.lower() == 'exit':
             print("Chatbot: Goodbye! Have a great day.")
             break
-
         response = chatbot.generate_response(user_input)
         print("Chatbot:", response)
 
